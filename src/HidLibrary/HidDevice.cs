@@ -316,6 +316,11 @@ namespace HidLibrary
                 {
                     return WriteData(data, timeout);
                 }
+                catch (TimeoutException ex)
+                {
+                    CloseDevice();
+                    return false;
+                }
                 catch
                 {
                     return false;
@@ -338,8 +343,13 @@ namespace HidLibrary
 
         public async Task<bool> WriteAsync(byte[] data, int timeout = 0)
         {
+
             var writeDelegate = new WriteDelegate(Write);
-            return await Task<bool>.Factory.FromAsync(writeDelegate.BeginInvoke, writeDelegate.EndInvoke, data, timeout, null);
+            return
+                await
+                    Task<bool>.Factory.FromAsync(writeDelegate.BeginInvoke, writeDelegate.EndInvoke, data, timeout,
+                        null);
+
         }
 
         public bool WriteReport(HidReport report)
@@ -537,12 +547,27 @@ namespace HidLibrary
             }
             else
             {
-                try
-                {
-                    var overlapped = new NativeOverlapped();
-                    return NativeMethods.WriteFile(Handle, buffer, (uint)buffer.Length, out bytesWritten, ref overlapped);
-                }
-                catch { return false; }
+                var tasks = new[]
+                    {
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                var overlapped = new NativeOverlapped();
+                                return NativeMethods.WriteFile(Handle, buffer, (uint) buffer.Length, out bytesWritten,
+                                    ref overlapped);
+                            }
+                            catch { return false; }
+                        }),
+                        Task.Delay(timeout)
+                    };
+
+                var index = Task.WaitAny(tasks);
+                if (index == 0)
+                    return ((Task<bool>)tasks[0]).Result;
+                else
+                    throw new TimeoutException("The task didn't complete");
+
             }
         }
 

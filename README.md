@@ -1,3 +1,7 @@
+*This fork includes a timeout in the WriteData method of the HidDevice class that was necessary to work with the Big Red Button from DreamCheeky : [DreamCheekyUSB](https://github.com/MrRenaud/DreamCheekyUSB)*
+
+------------------------------------
+
 <h3>There has been quite a bit of interest in this little library over the years but unfortunately I'm not able to support it at this time. I'm also unable to answer questions about using it with different devices. So you're on your own if you decide to use it. Please feel free to fork it or send me a pull request if you would like to contribute.</h3>
 
 Hid Library
